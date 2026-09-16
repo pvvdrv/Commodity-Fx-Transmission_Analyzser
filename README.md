@@ -1,107 +1,69 @@
-# Commodity-FX Transmission & Bond Risk Analyzer
+# Commodity-FX Transmission & Sovereign Risk Analyzer
 
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python)
-![Statsmodels](https://img.shields.io/badge/Statsmodels-Econometrics-darkgreen)
-![Plotly](https://img.shields.io/badge/Plotly-Interactive_Viz-purple)
-![Risk](https://img.shields.io/badge/Risk-Fixed_Income-red)
+An institutional-grade quantitative pipeline modeling the transmission of global commodity supply shocks into local emerging market FX depreciation and subsequent sovereign fixed-income portfolio drawdowns.
 
-An institutional-grade quantitative pipeline modeling the transmission of global commodity supply shocks into local emerging market FX depreciation and subsequent sovereign fixed-income portfolio drawdowns. 
+Moving beyond standard predictive algorithms, this architecture leverages structural econometrics to prove causality, map transmission lag, and translate macroeconomic volatility into non-linear Mark-to-Market capital impact for a multi-tenor bond portfolio.
 
-Moving beyond standard predictive algorithms, this project leverages structural econometrics to prove causality, map transmission lag, and translate macroeconomic volatility into hard, non-linear Mark-to-Market (MtM) capital impact for a multi-tenor bond portfolio.
+## Abstract & Economic Framework
 
----
+Emerging and frontier markets are highly vulnerable to exogenous supply-side shocks. This project mathematically maps the following structural transmission channel: 
 
-## 1. Executive Summary & Intuition
-Emerging markets face severe vulnerability to global supply-side shocks. When global oil prices spike, oil-importing nations experience a rapid drain on foreign exchange reserves to cover the import bill. This triggers structural depreciation of the local currency (e.g., USD/KES). To defend the currency and combat imported inflation, the central bank is forced to hike rates, leading to a violent repricing of domestic sovereign debt. 
+**Global Crude Shock $\rightarrow$ Local Currency Depreciation $\rightarrow$ Sovereign Yield Spike $\rightarrow$ Bond Portfolio Capital Loss**
 
-This project mathematically maps that exact transmission channel: **Global Crude Shock $\rightarrow$ Local Currency Depreciation $\rightarrow$ Sovereign Yield Spike $\rightarrow$ Bond Portfolio Capital Loss.**
+When global oil prices spike, oil-importing nations experience a rapid drain on foreign exchange reserves to cover escalating import bills. This terms-of-trade shock triggers structural depreciation of the local currency. To defend the currency peg or combat imported inflation, the domestic central bank is forced into restrictive monetary policy (hiking rates). This creates a violent upward repricing of domestic sovereign debt yields, executing severe capital destruction on fixed-income portfolios.
 
----
+## Structural Econometrics & Identification
 
-## 2. Interactive Visual Analytics
+To ensure institutional reliability, the pipeline is built on a strict, mathematically sound econometric foundation to isolate pure structural shocks from endogenous market noise.
+
+### I. Dual-Stationarity Diagnostics
+Time-series forecasting models deteriorate into spurious regressions if the underlying data is non-stationary. The engine converts raw price levels into continuous log returns and absolute spread differences, enforcing integration of order zero. This is rigorously validated using a dual-test approach:
+*   **Augmented Dickey-Fuller (ADF):** Tests the null hypothesis of a unit root (non-stationarity).
+*   **KPSS Test:** Tests the null hypothesis of stationarity.
+
+### II. Granger Causality & Directional Flow
+Before fitting the system, the pipeline computes a Granger Causality matrix to statistically verify the directional flow of information. It tests and rejects the null hypothesis that Brent Crude returns do not forecast USD/KES depreciation, proving the macroeconomic theory before modeling begins.
+
+### III. Cholesky-Ordered Vector Autoregression (SVAR)
+The core transmission mechanism is modeled using a Vector Autoregression system, with the optimal lag structure identified via the Akaike Information Criterion (AIC) to penalize overfitting:
+
+$$Y_t = c + \sum_{i=1}^{p} A_i Y_{t-i} + u_t$$
+
+Because standard VAR residuals ($u_t$) are contemporaneously correlated, we apply a Cholesky decomposition to isolate pure, uncorrelated structural shocks ($\varepsilon_t$):
+
+$$u_t = B\varepsilon_t$$
+
+**The Structural Hierarchy:** The matrix enforces a strict recursive causal order: Brent Crude $\rightarrow$ USD/KES $\rightarrow$ Sovereign Spread. This mathematical constraint ensures economic reality: an exogenous shock to global oil prices instantaneously impacts the local shilling, but a shock to the local shilling cannot contemporaneously move the global price of Brent Crude.
+
+## Transmission Dynamics & Fixed Income Stress Testing
+
+Once the SVAR model is fitted and residuals are verified via Durbin-Watson diagnostics, the engine extracts risk metrics and applies them to a $50M stylized asset-liability book.
+
+### I. OIRF and Variance Decomposition (FEVD)
+*   **Orthogonalized Impulse Response Functions:** Simulates a +1 standard deviation structural shock to Brent Crude, tracking the dynamic, month-by-month response of the FX and Yield variables over a 12-month horizon to calculate the "Pass-Through Half-Life."
+*   **Forecast Error Variance Decomposition:** Deconstructs the variance of the local currency, isolating the exact percentage of FX volatility driven strictly by global oil versus internal domestic noise.
+
+### II. Non-Linear Portfolio Valuation
+When the engine simulates a sovereign yield spike ($\Delta y$), it bypasses linear duration models, which severely overestimate capital losses during extreme macroeconomic shocks. Instead, the fixed-income stress tester utilizes a second-order Taylor series expansion to accurately price the 2Y, 5Y, 10Y, and 30Y tenors by accounting for convexity:
+
+$$\frac{\Delta P}{P} \approx -D_{mod} \Delta y + \frac{1}{2} C (\Delta y)^2$$
+
+Where $D_{mod}$ is Modified Duration (the linear rate risk) and $C$ is Convexity (the non-linear cushion). This calculates the exact terminal dollar drawdown across the aggregate fund.
+
+## Visual Analytics & Strategic Application
+
+The quantitative outputs are synthesized into a publication-grade interactive Plotly suite. 
 
 *(Note: The actual dashboards are fully interactive HTML files generated by the pipeline. Below are snapshot previews).*
 
-### Macroeconomic Shock Transmission & Elasticity
+### 1. Macroeconomic Shock Transmission & Elasticity
 ![Macro Dashboard](macro_dashboard.png)
-**Intuition:** The left panel maps the cumulative depreciation of the currency following a $+1\sigma$ oil shock. The heatmap isolates the exact percentage of currency variance strictly attributable to the global oil market over time.
+*Maps the cumulative FX depreciation alongside a rolling 12-month beta, quantifying the time-varying elasticity between global crude and local currency.*
 
-### 3D Yield Curve Volatility Surface
+### 2. 3D Yield Curve Volatility Surface
 ![3D Surface](3d_surface.png)
-**Intuition:** Yield curves do not shift in parallel. This surface maps how a supply shock disproportionately impacts the short-end of the curve (2Y, 5Y) faster and harder than the long-end (30Y) over the 12-month horizon.
+*Visualizes curve flattening and steepening dynamics, mapping how supply shocks disproportionately impact the short-end of the curve versus the long-end over the 12-month horizon.*
 
-### Non-Linear Portfolio Stress Testing ($50M AUM)
+### 3. Dynamic Portfolio Stress Testing
 ![Stress Test](stress_test.png)
-**Intuition:** Translating abstract basis-point shifts into hard dollar losses. The shaded area represents the aggregate fund drawdown, mitigating linear duration losses with convexity cushions.
-
----
-
-## 3. Econometric Methodology & Structural Identification
-
-To ensure institutional reliability, the engine is built on a strict econometric foundation. 
-
-### Phase I: Dual-Stationarity Diagnostics
-Time-series models break down if data is non-stationary (exhibiting random walks or unpredictable trends). To ensure all variables are $I(0)$ integrated, the engine converts price levels to continuous log returns and absolute basis-point differences.
-We validate this using a dual-test approach:
-1. **Augmented Dickey-Fuller (ADF):** Tests the null hypothesis of a unit root.
-2. **KPSS Test:** Tests the null hypothesis of stationarity. 
-
-### Phase II: Granger Causality 
-Before building the system, we mathematically prove the directional relationship. A Granger Causality matrix is computed to verify that Brent Crude movements statistically forecast USD/KES movements, rejecting the null hypothesis of no causality.
-
-### Phase III: Structural Vector Autoregression (SVAR)
-The transmission mechanism is modeled using a VAR system optimized via the Akaike Information Criterion (AIC) for lag selection:
-
-$$Y_t = c + A_1 Y_{t-1} + \dots + A_p Y_{t-p} + u_t$$
-
-**The Structural Identification (Cholesky Ordering):**
-Standard VAR residuals ($u_t$) are correlated. To isolate pure, uncorrelated structural shocks ($\varepsilon_t$), we apply a Cholesky decomposition:
-
-$$u_t = B \varepsilon_t$$
-
-We enforce a strict recursive causal hierarchy: **Brent Crude $\rightarrow$ USD/KES $\rightarrow$ Sovereign Spread**. 
-*Intuition:* A shock to global oil prices instantaneously impacts the Kenyan Shilling. However, a shock to the Kenyan Shilling cannot contemporaneously move the global price of Brent Crude. This enforces economic reality into the mathematics.
-
----
-
-## 4. Transmission Dynamics (IRF & FEVD)
-
-Once the structural model is fitted, we extract two critical metrics for risk managers:
-
-1. **Orthogonalized Impulse Response Functions (OIRF):** Measures the dynamic response of the FX and Yield variables to a $+1\sigma$ structural shock to Brent Crude over a 12-month horizon. We calculate the **Pass-Through Half-Life** to determine the exact month where 50% of the total damage is realized.
-2. **Forecast Error Variance Decomposition (FEVD):** Deconstructs the variance of the local currency. Over a 12-month horizon, it answers the question: *What percentage of local FX volatility is driven by global oil versus domestic noise?*
-
----
-
-## 5. Institutional Fixed-Income Stress Testing
-
-The final phase bridges the gap between econometrics and asset management. We simulate a $\$50,000,000$ stylized multi-tenor sovereign bond portfolio (2Y, 5Y, 10Y, 30Y weights).
-
-When the VAR model outputs a simulated sovereign yield spike ($\Delta y$), we bypass simple linear duration models (which overestimate losses during large shocks). Instead, we utilize a second-order Taylor expansion to accurately price the bonds, accounting for **Convexity**:
-
-$$\frac{\Delta P}{P} \approx -D_{mod} \cdot \Delta y + \frac{1}{2} C \cdot (\Delta y)^2$$
-
-* **Linear Duration Effect ($-D_{mod} \cdot \Delta y$):** The primary capital loss due to rising rates.
-* **Convexity Cushion ($\frac{1}{2} C \cdot (\Delta y)^2$):** The non-linear property of bonds that cushions the severity of the loss as yields rise.
-
-By applying this across the portfolio weights, the engine outputs the exact Mark-to-Market (MtM) dollar drawdown of the fund.
-
----
-
-## 6. Key Conclusions & Desk Applications
-
-1. **ALM Risk Limits:** By quantifying the Pass-Through Half-Life, Asset-Liability Managers can precisely time their FX hedging operations before the majority of the oil shock hits the currency.
-2. **Convexity Arbitrage:** The 3D Yield Surface allows fixed-income desks to visualize curve flattening/steepening dynamics, enabling them to shift portfolio weights into higher-convexity tenors (e.g., barbell strategies) prior to the macroeconomic shock realization.
-3. **Dynamic Variance Hedging:** The FEVD heatmap highlights exactly when exogenous global variables overtake domestic variables in driving local market risk, signaling when to pivot from domestic rate hedges to global commodity proxies.
-
----
-
-## 🚀 Execution & Deployment
-
-Clone the repository and run the engine. The script will automatically compute the pipeline, run the statistical proofs, and launch the three interactive HTML dashboards locally.
-
-```bash
-git clone [https://github.com/pwvdrv/Commodity-FX-Transmission-Analyzer.git](https://github.com/pwvdrv/Commodity-FX-Transmission-Analyzer.git)
-cd Commodity-FX-Transmission-Analyzer
-pip install -r requirements.txt
-python transmission_analyzer.py
+*Translates abstract yield shifts into hard capital destruction, separating linear duration losses from the convexity cushion to output aggregate fund drawdown.*
