@@ -1,11 +1,7 @@
 # Commodity-FX Transmission & Sovereign Risk Analyzer
-**An Institutional-Grade Quantitative Pipeline for Emerging Market Fixed-Income Stress Testing**
+**A Pipeline for Emerging Market Fixed-Income Stress Testing**
 
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python)
-![Statsmodels](https://img.shields.io/badge/Statsmodels-Econometrics-darkgreen)
-![Plotly](https://img.shields.io/badge/Plotly-Interactive_Viz-purple)
-![Risk](https://img.shields.io/badge/Risk-Fixed_Income-red)
-![Status](https://img.shields.io/badge/Status-Production_Ready-success)
+
 
 ## 1. Executive Abstract
 
