@@ -97,15 +97,11 @@ By applying this non-linear pricing formula across the weighted tenors, the engi
 
 ---
 
-## 📊 Interactive HTML Dashboards & Analytics
-
-The pipeline automatically compiles and exports publication-grade, interactive Plotly visualization suites. Click any link below to explore the models:
-
-* **[1. Macroeconomic Shock Transmission Dashboard](1_macro_transmission.html)** — *Interactive 2-panel suite tracking cumulative FX depreciation, sovereign spread impact, FEVD variance decomposition, and time-varying rolling beta elasticity.*
-* **[2. 3D Yield Curve Volatility Surface](2_yield_curve_surface.html)** — *Fully rotatable 3D surface mapping time horizon versus bond tenors (2Y to 30Y) against simulated yield shocks.*
-* **[3. Dynamic Portfolio Stress Testing Suite](3_portfolio_stress.html)** — *Tranche-by-tranche breakdown of a $50M AUM book, tracking non-linear convexity cushions and aggregate fund drawdowns.*
-
-*(Tip: To view these interactive dashboards directly in your browser without downloading, you can paste your GitHub repository link into [htmlpreview.github.io](https://htmlpreview.github.io/)!)*
+## 🌐 Live Interactive Dashboards
+*Hosted via GitHub Pages — Click to explore the full interactive Plotly suites:*
+* **[1. Macroeconomic Shock Transmission Suite](https://pwvdrv.github.io/Commodity-Fx-Transmission-Analyzser/1_macro_transmission.html)**
+* **[2. 3D Yield Curve Volatility Surface](https://pwvdrv.github.io/Commodity-Fx-Transmission-Analyzser/2_yield_curve_surface.html)**
+* **[3. Dynamic Portfolio Stress Testing Suite](https://pwvdrv.github.io/Commodity-Fx-Transmission-Analyzser/3_portfolio_stress.html)**
 ---
 
 ## 8. Deployment & Execution
