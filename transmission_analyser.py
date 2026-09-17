@@ -93,7 +93,7 @@ class DataIngestion:
     def run_descriptive_stats(self):
         log.info("Running descriptive statistics to check for normal distributions.")
         print("\n" + "=" * 85)
-        print("          DESCRIPTIVE STATISTICS & DISTRIBUTION ALIGNMENT         ")
+        print("          DESCRIPTIVE STATISTICS & DISTRIBUTION ALIGNMENT          ")
         print("=" * 85)
         
         for col in self.monthly_data.columns:
@@ -363,7 +363,7 @@ class VisualizerDashboard:
             legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5),
             margin=dict(t=80, b=80, l=40, r=40)
         )
-        fig.write_html(filename)
+        fig.write_html(filename, include_plotlyjs='cdn')
         self.generated_files.append(filename)
 
     def generate_3d_yield_curve_surface(self, filename="2_yield_curve_surface.html"):
@@ -392,7 +392,7 @@ class VisualizerDashboard:
             ),
             margin=dict(t=80, b=40, l=0, r=0)
         )
-        fig.write_html(filename)
+        fig.write_html(filename, include_plotlyjs='cdn')
         self.generated_files.append(filename)
 
     def generate_portfolio_stress_dashboard(self, filename="3_portfolio_stress.html"):
@@ -420,7 +420,7 @@ class VisualizerDashboard:
             margin=dict(t=80, b=80, l=60, r=40)
         )
         
-        fig.write_html(filename)
+        fig.write_html(filename, include_plotlyjs='cdn')
         self.generated_files.append(filename)
 
     def launch_all(self):
