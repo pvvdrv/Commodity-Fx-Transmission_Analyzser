@@ -98,11 +98,10 @@ By applying this non-linear pricing formula across the weighted tenors, the engi
 ---
 
 ## 🌐 Live Interactive Dashboards
-*Click the links below to instantly render the full interactive Plotly suites directly in your browser:*
-
-* **[1. Macroeconomic Shock Transmission Suite](https://raw.githack.com/pwvdrv/Commodity-Fx-Transmission_Analyzser/main/1_macro_transmission.html)**
-* **[2. 3D Yield Curve Volatility Surface](https://raw.githack.com/pwvdrv/Commodity-Fx-Transmission_Analyzser/main/2_yield_curve_surface.html)**
-* **[3. Dynamic Portfolio Stress Testing Suite](https://raw.githack.com/pwvdrv/Commodity-Fx-Transmission_Analyzser/main/3_portfolio_stress.html)**
+*Hosted via GitHub Pages — Click to explore the full interactive Plotly suites:*
+* **[1. Macroeconomic Shock Transmission Suite](https://pwvdrv.github.io/Commodity-Fx-Transmission_Analyzser/1_macro_transmission.html)**
+* **[2. 3D Yield Curve Volatility Surface](https://pwvdrv.github.io/Commodity-Fx-Transmission_Analyzser/2_yield_curve_surface.html)**
+* **[3. Dynamic Portfolio Stress Testing Suite](https://pwvdrv.github.io/Commodity-Fx-Transmission_Analyzser/3_portfolio_stress.html)**
 
 ## 8. Deployment & Execution
 
