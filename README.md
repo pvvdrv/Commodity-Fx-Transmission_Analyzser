@@ -104,6 +104,7 @@ By applying this non-linear pricing formula across the weighted tenors, the engi
 * **[3. Dynamic Portfolio Stress Testing Suite](https://pwvdrv.github.io/Commodity-Fx-Transmission-Analyzser/3_portfolio_stress.html)**
 ---
 
+
 ## 8. Deployment & Execution
 
 The architecture is built entirely in Python, utilizing `pandas`, `numpy`, `statsmodels`, `scipy`, and `plotly`.
