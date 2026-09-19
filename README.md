@@ -4,7 +4,7 @@
 
 
 ## 1. Executive Abstract
-
+ 
 Emerging and frontier markets operate under chronic vulnerability to exogenous supply-side shocks. This project engineers a robust, end-to-end econometric architecture designed to mathematically map, isolate, and quantify the structural transmission of global commodity shocks into domestic capital markets. 
 
 Moving beyond naive linear predictive algorithms, this pipeline leverages **Structural Vector Autoregression (SVAR)** with Cholesky causal ordering to model the exact transmission lag. It then translates that macroeconomic volatility into hard, non-linear Mark-to-Market (MtM) capital impact for a multi-tenor sovereign bond portfolio using second-order Taylor series approximations.
