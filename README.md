@@ -8,7 +8,7 @@
 
 Emerging and frontier markets are highly vulnerable to global supply shocks. This project engineers a robust, end-to-end econometric architecture designed to mathematically map, isolate, and quantify exactly how a global commodity shock bleeds into domestic capital markets.
 
-Moving beyond basic forecasting, this pipeline uses a **Structural Vector Autoregression (SVAR)** model to trace the exact timeline of the shock. It then translates that macroeconomic damage into a hard, non-linear dollar capital loss for a multi-tenor sovereign bond portfolio using second-order Taylor series approximations.
+Moving beyond basic forecasting, this pipeline uses a **Structural Vector Autoregression (SVAR)** model to trace the exact timeline of the shock. It then translates that macroeconomic damage into a hard, dollar capital loss for a multi-period sovereign bond portfolio using second-order Taylor series approximations.
 
 ---
 
@@ -31,7 +31,7 @@ Time-series forecasting models break down if the underlying data is structurally
 
 ### 3.1 Distribution Alignment & Normality Testing
 
-Financial time series notoriously exhibit extreme price swings (fat tails). The engine calculates the shape of the distributions and executes **Jarque-Bera tests** to ascertain normality. Passing this confirms that real-world tail risks are present, justifying the need for advanced non-linear risk modeling later on.
+Financial time series notoriously exhibit extreme price swings (kurtosis). The engine calculates the shape of the distributions and executes tests to ascertain normality. Passing this confirms that real-world tail risks are present, justifying the need for advanced risk modeling later on.
 
 ### 3.2 Dual-Stationarity Verification
 
