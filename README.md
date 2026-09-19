@@ -136,4 +136,4 @@ The econometric architecture and structural assumptions in this pipeline are gro
 * **Granger, C. W. J. (1969). *Investigating Causal Relations by Econometric Models and Cross-spectral Methods*. Econometrica.**
 *(The original framework for testing directional forecasting ability between time-series variables).*
 * **Della Corte, P., Sarno, L., Schmeling, M., & Wagner, C. (2022). *Exchange Rates and Sovereign Risk*. Management Science.**
-*(Empirical proof of the transmission mechanism utilized in this project, demonstrating that an increase in sovereign credit risk is accompanied by a significant contemporaneous depreciation of the domestic currency).*
+*(Empirical proof of the transmission mechanism utilized in this project, demonstrating that an increase in sovereign credit risk is accompanied by a significant depreciation of the domestic currency).*
