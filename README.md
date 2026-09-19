@@ -76,7 +76,7 @@ Once the model understands the structure of the economy, it extracts two critica
 
 The **OIRF** acts as a simulator. The model drops a massive, pure "+1 standard deviation" shock into Brent Crude and maps the exact month-by-month ripple effect hitting the currency and bond yields over the next year.
 
-By tracking this, the engine calculates the **Pass-Through Half-Life**—identifying the exact month where 50% of the total macroeconomic damage has been realized. This metric is vital for timing hedging operations.
+By tracking this, the engine calculates the **Pass-Through Half-Life** identifying the exact month where 50% of the total macroeconomic damage has been realized. This metric is vital for timing hedging operations.
 
 ### 5.2 Forecast Error Variance Decomposition (The Blame Pie Chart)
 
