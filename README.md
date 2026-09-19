@@ -73,7 +73,7 @@ Once the SVAR model is fitted and structural identification is achieved, the eng
 ### 5.1 Orthogonalized Impulse Response Functions (OIRF)
 The OIRF simulates a $+1\sigma$ structural shock to Brent Crude, tracking the dynamic, month-by-month response of the FX and Yield variables over a 12-month horizon. 
 
-By accumulating these responses, the engine calculates the **Pass-Through Half-Life**—identifying the exact temporal node where 50% of the terminal macroeconomic damage has been realized. This metric is vital for timing hedging operations.
+By accumulating these responses, the engine calculates the **Pass-Through Half-Life** identifying the exact temporal node where 50% of the terminal macroeconomic damage has been realized. This metric is vital for timing hedging operations.
 
 ### 5.2 Forecast Error Variance Decomposition (FEVD)
 The FEVD deconstructs the variance of the local currency and sovereign yields over time. It answers the fundamental risk question: *At a 6-month or 12-month horizon, what exact percentage of domestic market volatility is driven by global supply shocks versus internal domestic noise?*
@@ -98,7 +98,7 @@ By applying this non-linear pricing formula across the weighted tenors, the engi
 ---
 
 ## 🌐 Live Interactive Dashboards
-*Hosted via GitHub Pages — Click to explore the full interactive Plotly suites:*
+*Hosted via GitHub Pages. Click to explore the full interactive Plotly suites:*
 * **[1. Macroeconomic Shock Transmission Suite](https://pvvdrv.github.io/Commodity-Fx-Transmission_Analyzser/1_macro_transmission.html)**
 * **[2. 3D Yield Curve Volatility Surface](https://pvvdrv.github.io/Commodity-Fx-Transmission_Analyzser/2_yield_curve_surface.html)**
 * **[3. Dynamic Portfolio Stress Testing Suite](https://pvvdrv.github.io/Commodity-Fx-Transmission_Analyzser/3_portfolio_stress.html)** 
