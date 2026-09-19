@@ -50,7 +50,7 @@ Only variables that mathematically pass *both* criteria are cleared for the core
 
 ### 4.1 Directional Causality (The "Footprints" Test)
 
-Correlation does not imply causation. Before building the model, the pipeline computes a **Granger Causality matrix**. This tests for timing—it mathematically proves whether past oil prices help predict today's exchange rate better than the exchange rate's own history alone. It proves that oil moves first, validating the economic theory before modeling begins.
+Correlation does not imply causation. Before building the model, the pipeline computes a **Granger Causality matrix**. This tests for timing it mathematically proves whether past oil prices help predict today's exchange rate better than the exchange rate's own history alone. It proves that oil moves first, validating the economic theory before modeling begins.
 
 ### 4.2 Reduced-Form VAR & Lag Optimization (The "Goldilocks" Score)
 
@@ -63,7 +63,7 @@ The core transmission mechanism is modeled using a Vector Autoregression (VAR) s
 
 In financial markets, everything moves at once. If oil spikes and the currency crashes on the same day, a basic model gets confused about who caused what.
 
-To fix this, the engine applies a **Cholesky decomposition**—a mathematical filter that forces a strict timeline on the chaos. It enforces the reality that a global oil shock can crash the local currency instantly, but a local currency crash cannot instantly move the global price of oil. The forced causal order is:
+To fix this, the engine applies a **Cholesky decomposition** a mathematical filter that forces a strict timeline on the chaos. It enforces the reality that a global oil shock can crash the local currency instantly, but a local currency crash cannot instantly move the global price of oil. The forced causal order is:
 **Brent Crude $\rightarrow$ USD/KES $\rightarrow$ Sovereign Spread**
 
 ---
