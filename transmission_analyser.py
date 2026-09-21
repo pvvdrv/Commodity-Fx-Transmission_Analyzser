@@ -1,15 +1,10 @@
 """
-Commodity-FX Transmission & Bond Risk Analyzer
+Commodity-FX Transmission & Bond Risk Analyzer (Dynamic ARX & GARCH Edition)
 
-This project models how global oil price shocks ripple through emerging markets. 
-Specifically, it tracks how a spike in Brent Crude drains foreign exchange, 
-depreciates the local currency, and ultimately forces domestic sovereign bond 
-yields higher, causing capital losses for asset managers.
-
-It handles the entire pipeline: fetching the data, verifying the statistical 
-safety of the time-series, mapping the causal chain using a VAR model, and 
-finally translating those macroeconomic shocks into hard dollar losses for a 
-stylized multi-tenor bond portfolio. 
+This pipeline tracks how a global oil price shock drains foreign exchange, 
+depreciates the local currency, and forces domestic sovereign bond yields higher.
+It replaces complex SVAR mechanics with intuitive Two-Stage Distributed Lag 
+regressions and integrates GARCH(1,1) to model commodity volatility clustering.
 """
 
 import os
@@ -20,20 +15,17 @@ import warnings
 import pandas as pd
 import numpy as np
 import yfinance as yf
-import scipy.stats as stats
-from statsmodels.tsa.stattools import adfuller, kpss, grangercausalitytests
-from statsmodels.tsa.api import VAR
-from statsmodels.stats.stattools import durbin_watson
+import statsmodels.api as sm
+from statsmodels.tsa.stattools import adfuller
+from arch import arch_model
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# Suppressing statistical library warnings for a cleaner terminal output
 warnings.filterwarnings("ignore")
 
 
 # -----------------------------------------------------------------------------
 # System Logger Configuration
-# Sets up a clean, time-stamped logging stream for the terminal.
 # -----------------------------------------------------------------------------
 class SystemConfig:
     @staticmethod
@@ -55,8 +47,6 @@ log = SystemConfig.setup_logger()
 
 # -----------------------------------------------------------------------------
 # Data Ingestion & Alignment
-# Pulls the raw financial data from Yahoo Finance and aligns the international 
-# trading calendars so that every asset has matching dates and no missing gaps.
 # -----------------------------------------------------------------------------
 class DataIngestion:
     def __init__(self, start_date: str = "2015-01-01"):
@@ -90,28 +80,9 @@ class DataIngestion:
         self.monthly_data = daily_clean.resample('ME').last().dropna()
         return self.monthly_data
 
-    def run_descriptive_stats(self):
-        log.info("Running descriptive statistics to check for normal distributions.")
-        print("\n" + "=" * 85)
-        print("          DESCRIPTIVE STATISTICS & DISTRIBUTION ALIGNMENT          ")
-        print("=" * 85)
-        
-        for col in self.monthly_data.columns:
-            series = self.monthly_data[col].pct_change().dropna()
-            skew = stats.skew(series)
-            kurtosis = stats.kurtosis(series)
-            _, p_val = stats.jarque_bera(series)
-            
-            is_normal = "Yes" if p_val > 0.05 else "No (Fat Tails)"
-            print(f"Asset: {col:<15} | Skew: {skew:>6.2f} | Kurtosis: {kurtosis:>6.2f} | Normal? {is_normal}")
-        print("=" * 85 + "\n")
-
 
 # -----------------------------------------------------------------------------
-# Stationarity & Returns Engine
-# Time-series models break if the data is trending unpredictably. This section 
-# converts price levels into stable returns and runs strict tests (ADF and KPSS) 
-# to mathematically prove the data is safe to model.
+# Stationarity & Returns Engine (Simplified to just ADF)
 # -----------------------------------------------------------------------------
 class StationarityEngine:
     def __init__(self, monthly_data: pd.DataFrame):
@@ -119,7 +90,7 @@ class StationarityEngine:
         self.stationary_data = None
         
     def transform_data(self) -> pd.DataFrame:
-        log.info("Transforming price levels to continuous stationary distributions.")
+        log.info("Transforming price levels to continuous log returns.")
         df = pd.DataFrame(index=self.raw_data.index)
         
         df['Brent_Ret'] = np.log(self.raw_data['Brent_Oil'] / self.raw_data['Brent_Oil'].shift(1))
@@ -129,141 +100,122 @@ class StationarityEngine:
         self.stationary_data = df.dropna()
         return self.stationary_data
 
-    def run_dual_stationarity_tests(self):
-        log.info("Running dual-stationarity checks (ADF + KPSS).")
+    def run_adf_tests(self):
+        log.info("Running Augmented Dickey-Fuller (ADF) stationarity checks.")
         print("\n" + "=" * 85)
-        print("          DUAL-STATIONARITY DIAGNOSTICS (ADF & KPSS)        ")
+        print("          STATIONARITY DIAGNOSTICS (ADF)        ")
         print("=" * 85)
         for col in self.stationary_data.columns:
             series = self.stationary_data[col]
-            
-            adf_result = adfuller(series, autolag='AIC')
-            adf_p = adf_result[1]
-            adf_pass = "PASS" if adf_p < 0.05 else "FAIL"
-            
-            kpss_result = kpss(series, regression='c', nlags='auto')
-            kpss_p = kpss_result[1]
-            kpss_pass = "PASS" if kpss_p > 0.05 else "FAIL"
-            
-            overall = "STATIONARY (I(0))" if (adf_pass == "PASS" and kpss_pass == "PASS") else "REQUIRES DIFFERENCING"
-            
-            print(f"Variable: {col:<15} | ADF p: {adf_p:.4f} ({adf_pass}) | KPSS p: {kpss_p:.4f} ({kpss_pass}) | {overall}")
+            adf_p = adfuller(series, autolag='AIC')[1]
+            status = "PASS (Stationary)" if adf_p < 0.05 else "FAIL (Unit Root)"
+            print(f"Variable: {col:<15} | ADF p-value: {adf_p:.4f} | {status}")
         print("=" * 85 + "\n")
 
 
 # -----------------------------------------------------------------------------
-# Causal Modeling & Vector Autoregression (VAR)
-# This is the core engine. It checks if oil statistically causes currency moves 
-# (Granger Causality), and then fits a VAR model to quantify exactly how shocks 
-# ripple from one asset to another over time.
+# Risk Engine: GARCH(1,1) Volatility Modeling
 # -----------------------------------------------------------------------------
-class VAREngine:
+class GARCHEngine:
     def __init__(self, stationary_data: pd.DataFrame):
-        self.ordered_data = stationary_data[['Brent_Ret', 'USDKES_Ret', 'Sov_Proxy_Diff']]
-        self.model = None
-        self.results = None
+        self.brent_returns = stationary_data['Brent_Ret'] * 100  # Scaled for optimizer
+        self.garch_volatility = None
 
-    def run_granger_causality(self):
-        log.info("Computing Granger Causality Matrix...")
+    def fit_garch(self):
+        log.info("Fitting GARCH(1,1) to model Brent Crude volatility clustering.")
+        # p=1 (lagged variance), q=1 (lagged squared shock)
+        model = arch_model(self.brent_returns, vol='Garch', p=1, q=1, rescale=False)
+        results = model.fit(disp='off')
+        
+        self.garch_volatility = results.conditional_volatility / 100  # Scale back
+        
         print("\n" + "=" * 85)
-        print("          GRANGER CAUSALITY MATRIX (Max Lag=3)          ")
+        print("          GARCH(1,1) VOLATILITY ESTIMATION (BRENT CRUDE)        ")
         print("=" * 85)
-        
-        test_data_1 = self.ordered_data[['USDKES_Ret', 'Brent_Ret']]
-        res_1 = grangercausalitytests(test_data_1, maxlag=[3], verbose=False)
-        p_val_1 = res_1[3][0]['ssr_ftest'][1]
-        
-        test_data_2 = self.ordered_data[['Sov_Proxy_Diff', 'USDKES_Ret']]
-        res_2 = grangercausalitytests(test_data_2, maxlag=[3], verbose=False)
-        p_val_2 = res_2[3][0]['ssr_ftest'][1]
-        
-        print(f"H0: Brent Crude DOES NOT cause USD/KES Depreciation : P-Value = {p_val_1:.4f}")
-        print(f"H0: USD/KES Depreciation DOES NOT cause Yield Spike : P-Value = {p_val_2:.4f}")
-        print("-> A p-value < 0.05 rejects H0, proving statistical causality.")
+        print(f"Omega (Baseline Variance): {results.params['omega']:.6f}")
+        print(f"Alpha (Shock Sensitivity): {results.params['alpha[1]']:.4f}")
+        print(f"Beta (Volatility Persistence): {results.params['beta[1]']:.4f}")
+        print("-> A high Beta means once oil gets volatile, it stays volatile for months.")
         print("=" * 85 + "\n")
 
-    def fit_model(self, max_lags: int = 6):
-        log.info(f"Initializing VAR Engine. Scanning for optimal lag structure.")
-        self.model = VAR(self.ordered_data)
-        self.results = self.model.fit(maxlags=max_lags, ic='aic')
+
+# -----------------------------------------------------------------------------
+# Transmission Engine: Two-Stage ARX Regression
+# -----------------------------------------------------------------------------
+class TransmissionRegressionEngine:
+    def __init__(self, stationary_data: pd.DataFrame):
+        self.df = stationary_data
+        self.stage1_model = None
+        self.stage2_model = None
+
+    def run_lead_lag_analysis(self):
+        log.info("Running Lead-Lag Cross Correlation...")
+        print("\n" + "=" * 85)
+        print("          LEAD-LAG CORRELATION (THE 'FOOTPRINTS' TEST)        ")
+        print("=" * 85)
+        
+        for lag in range(4):
+            corr = self.df['Brent_Ret'].shift(lag).corr(self.df['USDKES_Ret'])
+            print(f"Correlation: Brent (Lag {lag}) -> USD/KES (Today) : {corr:.4f}")
+        print("-> Peak correlation at Lag > 0 proves oil leads the currency.")
+        print("=" * 85 + "\n")
+
+    def fit_two_stage_models(self):
+        log.info("Fitting Two-Stage Autoregressive Distributed Lag (ARX) models.")
+        
+        # Prep Data with Lags
+        df_model = self.df.copy()
+        df_model['USDKES_Lag1'] = df_model['USDKES_Ret'].shift(1)
+        df_model['Sov_Proxy_Lag1'] = df_model['Sov_Proxy_Diff'].shift(1)
+        df_model = df_model.dropna()
+
+        # Stage 1: How Brent hits USD/KES (accounting for currency momentum)
+        X1 = sm.add_constant(df_model[['Brent_Ret', 'USDKES_Lag1']])
+        y1 = df_model['USDKES_Ret']
+        self.stage1_model = sm.OLS(y1, X1).fit()
+
+        # Stage 2: How USD/KES depreciation hits Sovereign Spreads
+        X2 = sm.add_constant(df_model[['USDKES_Ret', 'Sov_Proxy_Lag1']])
+        y2 = df_model['Sov_Proxy_Diff']
+        self.stage2_model = sm.OLS(y2, X2).fit()
         
         print("\n" + "=" * 85)
-        print("          CHOLESKY-ORDERED VAR MODEL FITTING          ")
+        print("          TWO-STAGE MACRO TRANSMISSION REGRESSION (ARX)        ")
         print("=" * 85)
-        print(f"Optimal Lags Selected : {self.results.k_ar} months")
-        print(f"System AIC Score      : {self.results.aic:.4f}")
-        print("-" * 85)
+        print(f"Stage 1 (FX Impact) R-Squared : {self.stage1_model.rsquared:.4f}")
+        print(f"Stage 2 (Yield Impact) R-Squared : {self.stage2_model.rsquared:.4f}")
+        print("=" * 85 + "\n")
+
+    def simulate_scenario(self, shock_magnitude=0.20, horizon=12):
+        log.info(f"Simulating a {shock_magnitude*100}% Brent Crude Shock over {horizon} months.")
         
-        dw_stats = durbin_watson(self.results.resid)
-        print("Residual Autocorrelation Diagnostics (Durbin-Watson Target ~ 2.0):")
-        for idx, col in enumerate(self.ordered_data.columns):
-            print(f"  -> {col:<15}: {dw_stats[idx]:.2f}")
+        fx_path = np.zeros(horizon)
+        yield_path = np.zeros(horizon)
+        
+        # Month 0: Initial Shock
+        fx_path[0] = self.stage1_model.params['Brent_Ret'] * shock_magnitude
+        yield_path[0] = self.stage2_model.params['USDKES_Ret'] * fx_path[0]
+        
+        # Month 1 to Horizon (Autoregressive Ripple Effect)
+        for t in range(1, horizon):
+            fx_path[t] = self.stage1_model.params['USDKES_Lag1'] * fx_path[t-1]
+            yield_path[t] = self.stage2_model.params['Sov_Proxy_Lag1'] * yield_path[t-1] + \
+                            self.stage2_model.params['USDKES_Ret'] * fx_path[t]
             
-        print("-" * 85)
-        print("Causal Hierarchy Imposed (Structural Identification):")
-        print(" 1. Brent_Ret      [Global Exogenous Supply Shock]")
-        print(" 2. USDKES_Ret     [Terms of Trade / FX Drain]")
-        print(" 3. Sov_Proxy_Diff [Domestic Debt Vulnerability]")
-        print("=" * 85 + "\n")
+        fx_cumulative = np.cumsum(fx_path)
+        yield_cumulative = np.cumsum(yield_path)
         
-        return self.results
-
-
-# -----------------------------------------------------------------------------
-# Transmission Dynamics & Variance Decomposition
-# Takes the fitted model and simulates a real-world shock (+1 standard deviation 
-# jump in oil prices), charting its month-by-month impact over the next year.
-# -----------------------------------------------------------------------------
-class TransmissionDynamicsEngine:
-    def __init__(self, var_results):
-        self.results = var_results
-        self.horizon = 12
-        self.irf = None
-        self.fevd = None
-        self.fx_cumulative = None
-        self.proxy_cumulative = None
-        self.irf_stderr = None
-
-    def simulate_shocks(self):
-        log.info("Simulating +1σ Brent Crude Shock over 12-month horizon.")
-        self.irf = self.results.irf(self.horizon)
-        
-        fx_response = self.irf.orth_irfs[:, 1, 0]
-        proxy_response = self.irf.orth_irfs[:, 2, 0]
-        self.irf_stderr = self.irf.stderr()
-        
-        self.fx_cumulative = np.cumsum(fx_response)
-        self.proxy_cumulative = np.cumsum(proxy_response)
-        
-        max_fx_impact = self.fx_cumulative[-1]
-        half_life_threshold = max_fx_impact * 0.5
-        half_life_month = int(np.argmax(np.abs(self.fx_cumulative) >= np.abs(half_life_threshold))) + 1
-
-        print("\n" + "=" * 85)
-        print("          SHOCK TRANSMISSION PROFILING       ")
-        print("=" * 85)
-        print(f"Terminal FX Depreciation (Month 12)        : {max_fx_impact * 100:.2f}%")
-        print(f"Terminal Sovereign Spread Impact (Month 12): {self.proxy_cumulative[-1]:.2f} pts")
-        print(f"Shock Pass-Through Half-Life               : {half_life_month} Months")
-        print("=" * 85 + "\n")
-        
-    def variance_decomposition(self):
-        log.info("Running Forecast Error Variance Decomposition (FEVD).")
-        self.fevd = self.results.fevd(self.horizon)
+        return fx_cumulative, yield_cumulative
 
 
 # -----------------------------------------------------------------------------
 # Portfolio Stress Tester
-# Bridges the gap between statistics and finance. Maps the simulated yield 
-# curve shifts into a fixed-income portfolio to calculate actual capital loss 
-# using Modified Duration and Convexity formulas.
 # -----------------------------------------------------------------------------
 class FixedIncomeStressTester:
-    def __init__(self, simulated_proxy_path, portfolio_size=50000000):
+    def __init__(self, simulated_yield_path, portfolio_size=50000000):
         self.portfolio_size = portfolio_size
-        self.yield_trajectory_decimal = (np.abs(simulated_proxy_path) * 100) / 10000.0
+        self.yield_trajectory_decimal = (np.abs(simulated_yield_path) * 100) / 10000.0
         
-        # Stylized asset-liability weights and bond metrics
         self.portfolios = {
             '2-Year Sovereign': {'D_mod': 1.85, 'Convexity': 4.5, 'Weight': 0.20},
             '5-Year Sovereign': {'D_mod': 3.65, 'Convexity': 18.2, 'Weight': 0.35},
@@ -275,18 +227,10 @@ class FixedIncomeStressTester:
 
     def run_stress_test(self):
         log.info(f"Executing non-linear duration/convexity shock on ${self.portfolio_size/1e6:.1f}M book.")
-        print("\n" + "=" * 85)
-        print("          INSTITUTIONAL PORTFOLIO STRESS-TEST      ")
-        print("=" * 85)
-        peak_yield_bps = np.max(self.yield_trajectory_decimal) * 10000
-        print(f"Peak Assumed Yield Curve Shift : +{peak_yield_bps:.0f} bps")
-        print("-" * 85)
-        
         for name, metrics in self.portfolios.items():
             d_mod, c, w = metrics['D_mod'], metrics['Convexity'], metrics['Weight']
             sub_portfolio = self.portfolio_size * w
             
-            # Non-linear pricing formula
             linear_effect = -d_mod * self.yield_trajectory_decimal
             convexity_cushion = 0.5 * c * (self.yield_trajectory_decimal ** 2)
             net_drawdown_pct = linear_effect + convexity_cushion
@@ -297,25 +241,17 @@ class FixedIncomeStressTester:
                 'dollar_losses': dollar_losses
             }
             self.aggregate_loss_path += dollar_losses
-            
-            print(f"[{name}] (Allocation: {w*100:.0f}%)")
-            print(f"  Net Terminal Capital Loss : {net_drawdown_pct[-1] * 100:8.2f}%  ->  ${dollar_losses[-1]:,.2f}")
-            print()
-            
-        print("-" * 85)
-        print(f"AGGREGATE FUND LOSS AT HORIZON END: ${self.aggregate_loss_path[-1]:,.2f}")
-        print("=" * 85 + "\n")
 
 
 # -----------------------------------------------------------------------------
 # Plotly Visualization Engine
-# Generates the final output: interactive HTML dashboards (2D charts, Heatmaps, 
-# and 3D Volatility Surfaces) and launches them locally in the browser.
 # -----------------------------------------------------------------------------
 class VisualizerDashboard:
-    def __init__(self, stationary_data, dynamics, stress_tester):
+    def __init__(self, stationary_data, garch_vol, fx_path, yield_path, stress_tester):
         self.data = stationary_data
-        self.dynamics = dynamics
+        self.garch_vol = garch_vol
+        self.fx_path = fx_path
+        self.yield_path = yield_path
         self.stress = stress_tester
         self.generated_files = []
 
@@ -324,42 +260,39 @@ class VisualizerDashboard:
         webbrowser.open(file_path, new=2)
 
     def generate_macro_dashboard(self, filename="1_macro_transmission.html"):
-        log.info("Generating Macro Transmission Dashboard...")
-        months = list(range(1, len(self.dynamics.fx_cumulative) + 1))
+        log.info("Generating Macro Transmission & GARCH Dashboard...")
+        months = list(range(1, len(self.fx_path) + 1))
         
         fig = make_subplots(
             rows=2, cols=2, 
-            subplot_titles=("Cumulative FX Depreciation", 
-                            "Sovereign Spread Impact", 
-                            "FEVD: % Variance Explained by Oil", 
-                            "12-Month Rolling Beta (Elasticity)"),
+            subplot_titles=("Simulated FX Depreciation Path", 
+                            "Simulated Sovereign Yield Impact", 
+                            "GARCH(1,1) Oil Volatility Clustering", 
+                            "Yield Volatility Proxy"),
             vertical_spacing=0.15,
             horizontal_spacing=0.10
         )
 
-        fig.add_trace(go.Scatter(x=months, y=self.dynamics.fx_cumulative * 100,
+        fig.add_trace(go.Scatter(x=months, y=self.fx_path * 100,
                                  mode='lines+markers', line=dict(color='#ef553b', width=3),
                                  name='USD/KES Impact (%)'), row=1, col=1)
 
-        fig.add_trace(go.Scatter(x=months, y=self.dynamics.proxy_cumulative,
+        fig.add_trace(go.Scatter(x=months, y=self.yield_path,
                                  mode='lines+markers', line=dict(color='#ffa15a', width=3),
                                  name='Spread Impact (pts)'), row=1, col=2)
 
-        fevd_matrix = self.dynamics.fevd.decomp[:, :, 0] * 100 
-        fig.add_trace(go.Heatmap(z=fevd_matrix, x=[f"M{m}" for m in months],
-                                 y=['Brent', 'USD/KES', 'Sov Spread'],
-                                 colorscale='Viridis', name='FEVD',
-                                 colorbar=dict(len=0.45, y=0.22, x=0.46, thickness=15)), row=2, col=1)
+        fig.add_trace(go.Scatter(x=self.garch_vol.index, y=self.garch_vol * 100,
+                                 mode='lines', fill='tozeroy', line=dict(color='#ab63fa'),
+                                 name='Brent GARCH Vol (%)'), row=2, col=1)
 
-        rolling_beta = (self.data['USDKES_Ret'].rolling(12).cov(self.data['Brent_Ret']) / 
-                        self.data['Brent_Ret'].rolling(12).var()).dropna()
-        fig.add_trace(go.Scatter(x=rolling_beta.index, y=rolling_beta,
+        rolling_yield_vol = self.data['Sov_Proxy_Diff'].rolling(12).std()
+        fig.add_trace(go.Scatter(x=rolling_yield_vol.index, y=rolling_yield_vol,
                                  mode='lines', fill='tozeroy', line=dict(color='#00cc96'),
-                                 name='Rolling Beta'), row=2, col=2)
+                                 name='Yield Volatility'), row=2, col=2)
 
         fig.update_layout(
             template='plotly_dark', height=850, 
-            title='<b>Macroeconomic Shock Transmission Suite</b>',
+            title='<b>Macroeconomic Shock & Risk Spillover Suite</b>',
             legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5),
             margin=dict(t=80, b=80, l=40, r=40)
         )
@@ -368,7 +301,6 @@ class VisualizerDashboard:
 
     def generate_3d_yield_curve_surface(self, filename="2_yield_curve_surface.html"):
         log.info("Generating 3D Yield Curve Volatility Surface...")
-        
         tenors = [2, 5, 10, 30]
         months = list(range(1, 13))
         z_data = []
@@ -378,19 +310,24 @@ class VisualizerDashboard:
             tenor_multiplier = 1.0 if tenor <= 5 else (0.8 if tenor == 10 else 0.5)
             z_data.append(base_shock * tenor_multiplier)
             
-        fig = go.Figure(data=[go.Surface(z=z_data, x=months, y=[f"{t}Y" for t in tenors],
-                                         colorscale='Plasma')])
+        fig = go.Figure(data=[go.Surface(
+            z=z_data, x=months, y=[f"{t}Y" for t in tenors],
+            colorscale='Plasma',
+            colorbar=dict(title='Shock (bps)', len=0.6, thickness=20, x=0.9)
+        )])
         
         fig.update_layout(
-            template='plotly_dark', height=800,
-            title='<b>3D Yield Curve Shock Surface</b><br><sup>Time Horizon vs Bond Tenor vs Spread Shock (bps)</sup>',
-            scene=dict(
-                xaxis_title='Months Post-Shock',
-                yaxis_title='Bond Tenor',
-                zaxis_title='Yield Shock (bps)',
-                aspectratio=dict(x=2, y=1, z=0.8) 
+            template='plotly_dark', height=850,
+            title=dict(
+                text='<b>3D Yield Curve Volatility Surface</b><br><sup>Time Horizon vs Bond Tenor vs Spread Shock (bps)</sup>',
+                x=0.5, y=0.92, xanchor='center', yanchor='top'
             ),
-            margin=dict(t=80, b=40, l=0, r=0)
+            scene=dict(
+                xaxis_title='Months Post-Shock', yaxis_title='Bond Tenor', zaxis_title='Yield Shock (bps)',
+                aspectratio=dict(x=1.4, y=1.2, z=0.8),
+                camera=dict(eye=dict(x=1.6, y=-1.6, z=1.0))
+            ),
+            margin=dict(t=120, b=50, l=50, r=50)
         )
         fig.write_html(filename, include_plotlyjs='cdn')
         self.generated_files.append(filename)
@@ -419,7 +356,6 @@ class VisualizerDashboard:
             legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5),
             margin=dict(t=80, b=80, l=60, r=40)
         )
-        
         fig.write_html(filename, include_plotlyjs='cdn')
         self.generated_files.append(filename)
 
@@ -434,29 +370,29 @@ class VisualizerDashboard:
 # Main Pipeline Execution
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
-    log.info("--- INITIATING COMMODITY-FX TRANSMISSION PIPELINE ---")
+    log.info("--- INITIATING DYNAMIC ARX & GARCH TRANSMISSION PIPELINE ---")
     
     ingestion = DataIngestion(start_date="2015-01-01")
     ingestion.fetch_market_data()
     monthly_df = ingestion.clean_and_resample()
-    ingestion.run_descriptive_stats()
     
     stationarity = StationarityEngine(monthly_df)
     stationary_df = stationarity.transform_data()
-    stationarity.run_dual_stationarity_tests()
+    stationarity.run_adf_tests()
     
-    var_engine = VAREngine(stationary_df)
-    var_engine.run_granger_causality()
-    var_results = var_engine.fit_model(max_lags=6)
+    garch_engine = GARCHEngine(stationary_df)
+    garch_engine.fit_garch()
     
-    dynamics = TransmissionDynamicsEngine(var_results)
-    dynamics.simulate_shocks()
-    dynamics.variance_decomposition()
+    regression_engine = TransmissionRegressionEngine(stationary_df)
+    regression_engine.run_lead_lag_analysis()
+    regression_engine.fit_two_stage_models()
+    fx_cumulative, yield_cumulative = regression_engine.simulate_scenario(shock_magnitude=0.20, horizon=12)
     
-    stress_tester = FixedIncomeStressTester(dynamics.proxy_cumulative, portfolio_size=50000000)
+    stress_tester = FixedIncomeStressTester(yield_cumulative, portfolio_size=50000000)
     stress_tester.run_stress_test()
     
-    visualizer = VisualizerDashboard(stationary_df, dynamics, stress_tester)
+    visualizer = VisualizerDashboard(stationary_df, garch_engine.garch_volatility, 
+                                     fx_cumulative, yield_cumulative, stress_tester)
     visualizer.generate_macro_dashboard()
     visualizer.generate_3d_yield_curve_surface()
     visualizer.generate_portfolio_stress_dashboard()
