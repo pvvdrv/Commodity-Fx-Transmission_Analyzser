@@ -345,7 +345,7 @@ if __name__ == "__main__":
     engine = CommoditySovereignRiskEngine(
         commodity_ticker="CL=F",
         fx_ticker="KES=X",
-        fred_api_key="023b3dfed55cf2a5411de82f835a655f", 
+        fred_api_key="INSERT YOUR UNIQUE API KEY HERE", 
         period="5y",
         base_yield=12.28,
         portfolio_notional=100_000_000.0,
