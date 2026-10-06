@@ -6,7 +6,7 @@
 
 ## 1. What This Project Does
 
-Investing in emerging market government bonds is highly unpredictable. When a global event happens—like crude oil prices suddenly skyrocketing—it sets off a dangerous chain reaction. Net-importing countries bleed cash to buy expensive oil, their local currency crashes, and their central banks are forced to hike interest rates to stop the bleeding. When interest rates go up, the value of existing government bonds crashes. 
+Investing in emerging market government bonds is highly unpredictable. When a global event happens like crude oil prices suddenly skyrocketing it sets off a dangerous chain reaction. Net-importing countries bleed cash to buy expensive oil, their local currency crashes, and their central banks are forced to hike interest rates to stop the bleeding. When interest rates go up, the value of existing government bonds crashes. 
 
 Instead of relying on guesswork or economic theories to predict how bad the damage will be, this project builds a systematic, mathematical engine. It pulls live global market data, calculates exactly how fast an oil shock ripples through the local economy, and determines the exact dollar-value loss for a simulated **$100 Million portfolio** holding the Kenya 10-Year Government Bond.
 
@@ -93,7 +93,7 @@ Based on the most recent data run for the Kenyan market, the model revealed seve
 No quantitative model is perfect. Here are the current blind spots in this engine and how they can be upgraded in future versions:
 
 * **Limitation 1: The "Constant Panic" Assumption (Linearity)**
-  * **The Problem:** The current math assumes markets are equally calm or crazy all the time. It treats a 2% oil drop during a boring Tuesday exactly the same as a 2% drop during a severe global financial crisis. 
+  * **The Problem:** The current math assumes markets are equally calm or crazy all the time. It treats a 2% oil drop during a random day exactly the same as a 2% drop during a severe global financial crisis. 
   * **The Fix:** Layering a GARCH (Generalized Autoregressive Conditional Heteroskedasticity) model over the math. GARCH acts like a "panic sensor," telling the algorithm to weigh shocks differently depending on the current level of global fear.
 * **Limitation 2: Free Data Pipelines**
   * **The Problem:** While the US macro data comes from a solid source (FRED), the script relies on Yahoo Finance for oil and currency prices. Free web scrapers occasionally break or miss data points.
