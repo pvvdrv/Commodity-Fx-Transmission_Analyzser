@@ -6,9 +6,12 @@
 
 ## 1. What This Project Does
 
-Investing in emerging market government bonds is highly unpredictable. When a global event happens like crude oil prices suddenly skyrocketing it sets off a dangerous chain reaction. Net-importing countries bleed cash to buy expensive oil, their local currency crashes, and their central banks are forced to hike interest rates to stop the bleeding. When interest rates go up, the value of existing government bonds crashes. 
+Investing in emerging market government bonds is highly unpredictable. When a global event happens—like crude oil prices suddenly skyrocketing—it sets off a dangerous chain reaction. Net-importing countries bleed cash to buy expensive oil, their local currency crashes, and their central banks are forced to hike interest rates to stop the bleeding. When interest rates go up, the value of existing government bonds crashes. 
 
-Instead of relying on guesswork or economic theories to predict how bad the damage will be, this project builds a systematic, mathematical engine. It pulls live global market data, calculates exactly how fast an oil shock ripples through the local economy, and determines the exact dollar-value loss for a simulated **$100 Million portfolio** holding the Kenya 10-Year Government Bond.
+Instead of relying on guesswork or economic theories to predict how bad the damage will be, this project builds a systematic, mathematical engine. It pulls live global market data, calculates exactly how fast an oil shock ripples through the local economy, and determines the exact dollar-value loss for our simulated portfolio.
+
+**What is in the Portfolio?**
+To make the math real, the engine uses a **simulated $100 Million baseline portfolio**. This portfolio is assumed to be 100% invested in the **Kenya 10-Year Government Bond** (the standard benchmark for local borrowing, currently carrying a baseline yield of around 12.28%). Tracking this specific asset allows the model to show exactly how much physical capital is wiped out by a global macro shock.
 
 ---
 
@@ -16,23 +19,23 @@ Instead of relying on guesswork or economic theories to predict how bad the dama
 
 To accurately map this chain reaction, the model pulls data from the Federal Reserve Economic Data (FRED) API and Yahoo Finance to track five specific forces:
 
-### 1. Global Risk Appetite - S&P 500 (`^GSPC`)
+### 1. Global Risk Appetite — S&P 500 (`^GSPC`)
 * **What it measures:** The performance of the largest 500 companies in the US.
 * **Why we use it:** We need to know if investors are feeling brave or panicked. If Kenyan bonds crash, we use this to prove whether it was caused by an oil shock, or if it was just a day when the entire global stock market was panicking.
 
-### 2. Global Liquidity - US 10-Year Treasury Yield (`DGS10`)
+### 2. Global Liquidity — US 10-Year Treasury Yield (`DGS10`)
 * **What it measures:** The borrowing cost for the United States government.
 * **Why we use it:** The US Treasury is the safest asset in the world. When US interest rates go up, global investors pull their money out of risky emerging markets and put it into safe US bonds. Tracking this prevents us from falsely blaming oil for a bond crash that was actually caused by the US Federal Reserve.
 
-### 3. The Catalyst - Crude Oil Futures (`CL=F`)
+### 3. The Catalyst — Crude Oil Futures (`CL=F`)
 * **What it measures:** The global price of energy.
 * **Why we use it:** For emerging markets that import their fuel, a spike in oil prices acts like a massive, immediate tax on the entire country, draining foreign currency reserves.
 
-### 4. Local Currency - US Dollar to Kenyan Shilling (`KES=X`)
+### 4. Local Currency — US Dollar to Kenyan Shilling (`KES=X`)
 * **What it measures:** How many shillings it takes to buy one US Dollar.
 * **Why we use it:** This is the bridge between global shocks and local pain. A weakening currency means imported goods (like fuel and food) become instantly more expensive, triggering inflation.
 
-### 5. Local Borrowing Costs - Kenya 10-Year Sovereign Yield
+### 5. Local Borrowing Costs — Kenya 10-Year Sovereign Yield
 * **What it measures:** The interest rate the Kenyan government must pay to borrow money for a decade.
 * **Why we use it:** This is our target variable. As this yield goes up, the value of our $100M bond portfolio goes down. 
 
@@ -43,8 +46,9 @@ To accurately map this chain reaction, the model pulls data from the Federal Res
 Financial data from emerging markets is notoriously messy. Here is how the engine cleans the data and calculates the risk:
 
 ### Step 1: The Illiquidity Filter (Fixing Stale Data)
-In the US, bonds trade thousands of times a second. In emerging markets, a bond might not trade at all on a Tuesday or Wednesday. If we feed that raw data into a model, the computer will see "0% change" and falsely assume there is "zero risk." 
-To fix this, we use **Cubic Spline Interpolation** to mathematically draw a curve over the missing days, and a **3-Day Moving Average** to smooth out the jagged noise. This gives the algorithm a clean, logical trendline to read.
+In the US, bonds trade thousands of times a second. In emerging markets, a bond might not trade at all on a Tuesday or Wednesday. If we feed that raw data into a model, the computer will see "0% change" and falsely assume there is "zero risk." To fix this, we apply a two-step mathematical filter:
+* **Cubic Spline Interpolation (Connecting the Dots):** When there are missing trading days, this math acts like a digital artist's curve. It draws a smooth, natural arc between the last known price and the next known price, logically estimating what the price *would* have been if trading had occurred.
+* **3-Day Moving Average (The Shock Absorber):** Even after connecting the dots, frontier market data can be jagged. By taking the rolling average of the last 3 days, we smooth out tiny, irrelevant price bumps so the algorithm doesn't trigger a false alarm over normal daily noise.
 
 ### Step 2: Tracking the Chain Reaction (Vector Autoregression)
 To see how our five variables interact, we use a statistical model called Vector Autoregression (VAR). Instead of just looking at how A affects B, VAR looks at how A affects B, while B is simultaneously affecting C, and C is affecting A. 
@@ -93,7 +97,7 @@ Based on the most recent data run for the Kenyan market, the model revealed seve
 No quantitative model is perfect. Here are the current blind spots in this engine and how they can be upgraded in future versions:
 
 * **Limitation 1: The "Constant Panic" Assumption (Linearity)**
-  * **The Problem:** The current math assumes markets are equally calm or crazy all the time. It treats a 2% oil drop during a random day exactly the same as a 2% drop during a severe global financial crisis. 
+  * **The Problem:** The current math assumes markets are equally calm or crazy all the time. It treats a 2% oil drop during a boring Tuesday exactly the same as a 2% drop during a severe global financial crisis. 
   * **The Fix:** Layering a GARCH (Generalized Autoregressive Conditional Heteroskedasticity) model over the math. GARCH acts like a "panic sensor," telling the algorithm to weigh shocks differently depending on the current level of global fear.
 * **Limitation 2: Free Data Pipelines**
   * **The Problem:** While the US macro data comes from a solid source (FRED), the script relies on Yahoo Finance for oil and currency prices. Free web scrapers occasionally break or miss data points.
