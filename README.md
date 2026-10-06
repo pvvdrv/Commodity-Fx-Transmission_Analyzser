@@ -1,5 +1,7 @@
 # Commodity-FX Transmission & Sovereign Risk Analyzer
 
+[![Live Dashboard](https://img.shields.io/badge/View-Live_Interactive_Dashboard-2ea44f?style=for-the-badge)](https://pvvdrv.github.io/Commodity-Fx-Transmission_Analyzser/risk_analyzer_dashboard.html)
+
 **[Click Here to Access the Live Interactive Dashboard](https://pvvdrv.github.io/Commodity-Fx-Transmission_Analyzser/risk_analyzer_dashboard.html)**
 
 ---
@@ -108,7 +110,26 @@ No quantitative model is perfect. Here are the current blind spots in this engin
 
 ---
 
-## 7. How the Code is Structured
+## 7. Academic References & Literature
+
+The mathematical frameworks and economic theories applied in this pipeline are grounded in the following academic literature and textbooks:
+
+1. **Time-Series Econometrics (VAR Models):** 
+   * Lütkepohl, H. (2005). *New Introduction to Multiple Time Series Analysis*. Springer. *(Used for the foundational math behind Vector Autoregression, Impulse Responses, and Variance Decomposition).*
+2. **Fixed Income Mathematics:**
+   * Fabozzi, F. J. (2012). *Bond Markets, Analysis, and Strategies*. Pearson. *(Used for the Taylor series expansion, Modified Duration, and Convexity formulas used to price portfolio damage).*
+3. **Risk Management & Stress Testing:**
+   * Jorion, P. (2006). *Value at Risk: The New Benchmark for Managing Financial Risk*. McGraw-Hill. *(Used as the mathematical basis for calculating the 99% VaR and Conditional VaR stress tests).*
+4. **Commodity Shocks & Emerging Markets:**
+   * Cashin, P., Céspedes, L. F., & Sahay, R. (2004). "Commodity Currencies and the Real Exchange Rate". *Journal of Development Economics*. *(Academic proof of how global commodity shocks directly dictate local currency valuations in developing nations).*
+5. **Global Risk Appetite (The S&P 500 & US Treasury Control):**
+   * Rey, H. (2013). "Dilemma not Trilemma: The Global Financial Cycle and Monetary Policy Independence". *Federal Reserve Bank of Kansas City*. *(Explains the theory behind adding the S&P 500 and US 10-Year Treasury to the model to control for the "Global Financial Cycle").*
+6. **Handling Frontier Market Illiquidity:**
+   * Bekaert, G., Harvey, C. R., & Lundblad, C. (2007). "Liquidity and Expected Returns: Lessons from Emerging Markets". *The Review of Financial Studies*. *(Provides the rationale for needing robust data smoothers, like our cubic spline interpolation, when analyzing illiquid frontier market debt).*
+
+---
+
+## 8. How the Code is Structured
 
 The project is built using a clean, Object-Oriented structure in Python:
 
