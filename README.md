@@ -48,8 +48,8 @@ Financial data from emerging markets is notoriously messy. Here is how the engin
 
 ### Step 1: The Illiquidity Filter (Fixing Stale Data)
 In the US, bonds trade thousands of times a second. In emerging markets, a bond might not trade at all on a Tuesday or Wednesday. If we feed that raw data into a model, the computer will see "0% change" and falsely assume there is "zero risk." To fix this, we apply a two-step mathematical filter:
-* **Cubic Spline Interpolation (Connecting the Dots):** When there are missing trading days, this math acts like a digital artist's curve. It draws a smooth, natural arc between the last known price and the next known price, logically estimating what the price *would* have been if trading had occurred.
-* **3-Day Moving Average (The Shock Absorber):** Even after connecting the dots, frontier market data can be jagged. By taking the rolling average of the last 3 days, we smooth out tiny, irrelevant price bumps so the algorithm doesn't trigger a false alarm over normal daily noise.
+* **Cubic Spline Interpolation (Connecting the Dots):** When there are missing trading days, this curve draws a smooth, natural arc between the last known price and the next known price, thus estimating what the price would have been if trading had occurred.
+* **3-Day Moving Average (The Shock Absorber):** Even after connecting the dots, illiquid debt markets still produce sharp, uneven price jumps. By taking the rolling average of the last 3 days, we smooth out tiny, irrelevant price bumps so the algorithm doesn't trigger a false alarm over normal daily noise.
 
 ### Step 2: Tracking the Chain Reaction (Vector Autoregression)
 To see how our five variables interact, we use a statistical model called Vector Autoregression (VAR). Instead of just looking at how A affects B, VAR looks at how A affects B, while B is simultaneously affecting C, and C is affecting A. 
@@ -88,8 +88,8 @@ The Python script automatically generates a 4-panel HTML dashboard to visualize 
 Based on the most recent data run for the Kenyan market, the model revealed several critical, counter-intuitive insights:
 
 1. **Currency is the True Driver:** The Variance Breakdown (Chart C) proved that direct contagion from global oil and US stock markets plays a surprisingly small visual role in daily Kenyan bond volatility. Instead, **local currency fluctuations (USD/KES) and internal market noise are the overwhelming drivers** of local borrowing costs. 
-2. **Counter-Intuitive Shock Responses:** Traditional economic theory says expensive oil causes inflation, which causes interest rates to rise. However, the simulation (Chart B) showed that in this specific historical window, a sudden jump in oil prices actually caused local borrowing costs to *drop* immediately, highlighting the complex realities of frontier market liquidity.
-3. **The Convexity Cushion is Real:** Stress testing the $100M portfolio demonstrated that using basic linear math (Duration) heavily overestimates portfolio losses during severe market crashes. The bond's non-linear "Convexity" acts as a mathematical shock absorber, saving the portfolio from expected extreme losses (Chart D).
+2. **Counter-Intuitive Shock Responses:** Traditional economic theory says expensive oil causes inflation, which causes interest rates to rise. However, the simulation (Chart B) showed that in this specific historical window, a sudden jump in oil prices actually caused local borrowing costs to drop immediately, highlighting the complex realities of frontier market liquidity.
+3. **The Convexity Cushion is Real:** Stress testing the $100M portfolio demonstrated that using basic linear math (Duration) heavily overestimates portfolio losses during severe market crashes. The bond's non-linear "Convexity" acts as a shock absorber, saving the portfolio from expected extreme losses (Chart D).
 
 ---
 
