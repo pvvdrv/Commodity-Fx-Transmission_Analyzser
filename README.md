@@ -16,19 +16,19 @@ Instead of relying on guesswork or economic theories to predict how bad the dama
 
 To accurately map this chain reaction, the model pulls data from the Federal Reserve Economic Data (FRED) API and Yahoo Finance to track five specific forces:
 
-### 1. Global Risk Appetite — S&P 500 (`^GSPC`)
+### 1. Global Risk Appetite - S&P 500 (`^GSPC`)
 * **What it measures:** The performance of the largest 500 companies in the US.
 * **Why we use it:** We need to know if investors are feeling brave or panicked. If Kenyan bonds crash, we use this to prove whether it was caused by an oil shock, or if it was just a day when the entire global stock market was panicking.
 
-### 2. Global Liquidity — US 10-Year Treasury Yield (`DGS10`)
+### 2. Global Liquidity - US 10-Year Treasury Yield (`DGS10`)
 * **What it measures:** The borrowing cost for the United States government.
 * **Why we use it:** The US Treasury is the safest asset in the world. When US interest rates go up, global investors pull their money out of risky emerging markets and put it into safe US bonds. Tracking this prevents us from falsely blaming oil for a bond crash that was actually caused by the US Federal Reserve.
 
-### 3. The Catalyst — Crude Oil Futures (`CL=F`)
+### 3. The Catalyst - Crude Oil Futures (`CL=F`)
 * **What it measures:** The global price of energy.
 * **Why we use it:** For emerging markets that import their fuel, a spike in oil prices acts like a massive, immediate tax on the entire country, draining foreign currency reserves.
 
-### 4. Local Currency — US Dollar to Kenyan Shilling (`KES=X`)
+### 4. Local Currency - US Dollar to Kenyan Shilling (`KES=X`)
 * **What it measures:** How many shillings it takes to buy one US Dollar.
 * **Why we use it:** This is the bridge between global shocks and local pain. A weakening currency means imported goods (like fuel and food) become instantly more expensive, triggering inflation.
 
