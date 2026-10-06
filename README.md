@@ -1,13 +1,32 @@
 # Commodity-FX Transmission & Sovereign Risk Analyzer
 
-[![Live Dashboard](https://img.shields.io/badge/View-Live_Interactive_Dashboard-2ea44f?style=for-the-badge)](https://pvvdrv.github.io/Commodity-Fx-Transmission_Analyzser/risk_analyzer_dashboard.html)
+[![Live Dashboard](https://img.shields.io/badge/View-Live_Interactive_Dashboard-2ea44f?style=for-the-badge)](https://pwdrv.github.io/Commodity-Fx-Transmission_Analyzser/risk_analyzer_dashboard.html)
 
-**[Click Here to Access the Live Interactive Dashboard](https://pvvdrv.github.io/Commodity-Fx-Transmission_Analyzser/risk_analyzer_dashboard.html)**
+**[Click Here to Access the Live Interactive Dashboard](https://pwdrv.github.io/Commodity-Fx-Transmission_Analyzser/risk_analyzer_dashboard.html)**
 
-## Overview
-This quantitative engine models the transmission mechanism of global commodity shocks (specifically crude oil) to emerging market foreign exchange rates and sovereign debt pricing. Built with Python, it utilizes time-series econometrics and fixed-income analytics to quantify how external macroeconomic shocks dictate localized borrowing costs and portfolio tail-risk.
+## Project Purpose & Executive Summary
+Emerging and frontier markets are highly sensitive to external macroeconomic shocks. When global commodity prices (like crude oil) spike, net-importing nations often face severe currency depreciation, imported inflation, and capital flight. To retain foreign investors, central banks are forced to hike interest rates, which crashes the value of existing government bonds.
 
-The current implementation acts as a stress-testing pipeline for the **Kenya 10-Year Government Bond**, analyzing its vulnerability to the USD/KES exchange rate, global risk appetite (S&P 500), and US monetary policy (US 10-Year Treasury Yields).
+This project is a **quantitative fixed-income stress-testing engine**. It mathematically isolates the "domino effect" of global shocks (Oil, S&P 500, US Treasuries) on local frontier economies (specifically mapping the USD/KES exchange rate and Kenya 10-Year Government Bond yields). By moving beyond theoretical economics, this engine translates macro-volatility into exact dollar-value losses for a simulated $100M sovereign debt portfolio.
+
+## Key Empirical Findings
+Based on the most recent computational runs visualized in the dashboard, the model revealed several critical insights regarding the Kenyan sovereign debt market:
+
+1. **The Dominance of Currency Risk:** The Forecast Error Variance Decomposition (FEVD) proves that direct contagion from global oil and US stock markets plays a surprisingly small visual role in daily bond volatility. Instead, **local currency fluctuations (USD/KES) and internal market noise are the overwhelming drivers** of Kenyan borrowing costs. 
+2. **Counter-Intuitive Shock Responses:** The Impulse Response Function (IRF) tracking a 1-standard-deviation oil shock showed that Kenyan yields did not immediately spike as traditional economic theory might suggest. Instead, yields experienced a rapid initial dip before stabilizing at a slightly lower "new normal," highlighting the complex, non-linear realities of frontier market liquidity.
+3. **The Convexity Cushion:** Stress testing the portfolio against historical 99% Value-at-Risk (VaR) scenarios demonstrated that using basic linear math (Duration) heavily overestimates portfolio losses during severe market crashes. The bond's non-linear "Convexity" acts as a mathematical shock absorber, saving the portfolio from expected extreme losses.
+
+## Target Audience & Use Cases
+* **Emerging Market Portfolio Managers:** To calculate precise VaR and CVaR for African sovereign debt portfolios.
+* **Macroeconomic Hedge Funds:** To identify statistical arbitrages between global commodity pricing and delayed local EM currency reactions.
+* **Central Bank & Sovereign Risk Analysts:** To empirically measure how much of the nation's borrowing cost is driven by local policy versus uncontrollable global market forces.
+
+## Tech Stack
+* **Language:** Python 3.10+
+* **Econometrics & Math:** `statsmodels` (VAR, ADF, Granger Causality), `scipy` (Cubic Spline Interpolation), `numpy`
+* **Data Engineering:** `pandas`
+* **Data Gateways:** `fredapi` (Federal Reserve Economic Data), `yfinance` (Yahoo Finance)
+* **Data Visualization:** `plotly` (Interactive HTML Canvas)
 
 ---
 
@@ -50,7 +69,14 @@ The engine conducts extreme-value stress testing on a simulated $100M baseline p
 
 * **Omitted Variable Bias Resolved:** The model integrates FRED API data (S&P 500 and US 10-Year Treasury) to serve as proxies for global risk appetite and liquidity. This expands the VAR matrix, ensuring the model does not falsely blame oil prices for bond sell-offs actually caused by US Federal Reserve rate hikes or broader stock market panics.
 * **The Linearity Assumption (No GARCH Overlay):** The current VAR framework assumes homoskedasticity (constant volatility). It currently lacks a GARCH (Generalized Autoregressive Conditional Heteroskedasticity) overlay. Consequently, it calculates a 2% oil drop during a calm market using the exact same statistical weight as a 2% drop during a severe financial crisis.
-* **Data Ingestion Risks:** While the model uses the robust FRED API for macro data, it relies on Yahoo Finance for commodity and FX pairs. A fallback synthesis generator is built-in to prevent pipeline crashes during web-scraping blackouts, but for enterprise deployment, this should be routed through a dedicated institutional feed (e.g., Bloomberg B-PIPE or Refinitiv).
+* **Data Ingestion Risks:** While the model uses the robust FRED API for macro data, it relies on Yahoo Finance for commodity and FX pairs. A fallback synthesis generator is built-in to prevent pipeline crashes during web-scraping blackouts, but for enterprise deployment, this should be routed through a dedicated institutional feed.
+
+---
+
+## Future Roadmap
+* **GARCH Integration:** Layering a GARCH(1,1) model over the VAR residuals to properly account for volatility clustering in frontier markets.
+* **Panel VAR Expansion:** Scaling the matrix to analyze cross-border contagion across multiple Sub-Saharan African economies simultaneously (e.g., Kenya, Nigeria, Egypt, and South Africa).
+* **Copula Tail-Dependence:** Replacing basic correlation with Copula functions to better model how assets behave during extreme, "black swan" market crashes.
 
 ---
 
@@ -61,6 +87,6 @@ You will need a free API key from the Federal Reserve Economic Data (FRED) porta
 
 **Installation:**
 ```bash
-git clone [https://github.com/pvvdrv/Commodity-Fx-Transmission_Analyzser.git](https://github.com/pvvdrv/Commodity-Fx-Transmission_Analyzser.git)
+git clone [https://github.com/pwdrv/Commodity-Fx-Transmission_Analyzser.git](https://github.com/pwdrv/Commodity-Fx-Transmission_Analyzser.git)
 cd Commodity-Fx-Transmission_Analyzser
 pip install -r requirements.txt
