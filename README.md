@@ -1,7 +1,5 @@
 # Commodity-FX Transmission & Sovereign Risk Analyzer
 
-[![Live Dashboard](https://img.shields.io/badge/View-Live_Interactive_Dashboard-2ea44f?style=for-the-badge)](https://pvvdrv.github.io/Commodity-Fx-Transmission_Analyzser/risk_analyzer_dashboard.html)
-
 **[Click Here to Access the Live Interactive Dashboard](https://pvvdrv.github.io/Commodity-Fx-Transmission_Analyzser/risk_analyzer_dashboard.html)**
 
 ---
@@ -90,7 +88,23 @@ Based on the most recent data run for the Kenyan market, the model revealed seve
 
 ---
 
-## 6. How the Code is Structured
+## 6. Model Limitations & How to Fix Them
+
+No quantitative model is perfect. Here are the current blind spots in this engine and how they can be upgraded in future versions:
+
+* **Limitation 1: The "Constant Panic" Assumption (Linearity)**
+  * **The Problem:** The current math assumes markets are equally calm or crazy all the time. It treats a 2% oil drop during a boring Tuesday exactly the same as a 2% drop during a severe global financial crisis. 
+  * **The Fix:** Layering a GARCH (Generalized Autoregressive Conditional Heteroskedasticity) model over the math. GARCH acts like a "panic sensor," telling the algorithm to weigh shocks differently depending on the current level of global fear.
+* **Limitation 2: Free Data Pipelines**
+  * **The Problem:** While the US macro data comes from a solid source (FRED), the script relies on Yahoo Finance for oil and currency prices. Free web scrapers occasionally break or miss data points.
+  * **The Fix:** Connect the Python script directly to a paid, institutional-grade API like Bloomberg, Refinitiv, or a dedicated algorithmic trading data feed for flawless reliability. 
+* **Limitation 3: The Single-Country Focus**
+  * **The Problem:** This model only looks at Kenya in a vacuum. In the real world, if Kenyan bonds crash, investors might panic and sell neighboring country bonds too (a contagion effect).
+  * **The Fix:** Upgrade the math to a "Panel VAR." This allows the engine to track multiple Sub-Saharan African economies at the exact same time, measuring how a shock in one country spills over into another.
+
+---
+
+## 7. How the Code is Structured
 
 The project is built using a clean, Object-Oriented structure in Python:
 
