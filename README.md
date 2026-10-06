@@ -32,7 +32,7 @@ To accurately map this chain reaction, the model pulls data from the Federal Res
 * **What it measures:** How many shillings it takes to buy one US Dollar.
 * **Why we use it:** This is the bridge between global shocks and local pain. A weakening currency means imported goods (like fuel and food) become instantly more expensive, triggering inflation.
 
-### 5. Local Borrowing Costs — Kenya 10-Year Sovereign Yield
+### 5. Local Borrowing Costs - Kenya 10-Year Sovereign Yield
 * **What it measures:** The interest rate the Kenyan government must pay to borrow money for a decade.
 * **Why we use it:** This is our target variable. As this yield goes up, the value of our $100M bond portfolio goes down. 
 
