@@ -94,7 +94,7 @@ Based on the most recent data run for the Kenyan market, the model revealed seve
 ---
 
 ## 6. Model Limitations & How to Fix Them
-
+ 
 No quantitative model is perfect. Here are the current blind spots in this engine and how they can be upgraded in future versions:
 
 * **Limitation 1: The "Constant Panic" Assumption (Linearity)**
